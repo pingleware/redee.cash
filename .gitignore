@@ -1,3 +1,4 @@
 ._*
 package-lock.json
 node_modules/
+src/wallet_data.json

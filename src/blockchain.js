@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const { exec } = require('child_process');
-const { Block } = require('./block');
+const Block = require('./block');
 
 class Blockchain {
   constructor() {
@@ -52,7 +52,7 @@ class Blockchain {
   }
 
   createGenesisBlock() {
-    return new Block(0, new Date().toISOString().split("T")[0], 'Genesis Block', '0');
+    return new Block(0, new Date().toISOString(), 'Genesis Block', '0');
   }
 
   createBlock() {
@@ -60,15 +60,15 @@ class Blockchain {
     const newIndex = previousBlock.index + 1;
     const newTimestamp = new Date().toISOString();
     const newBlock = new Block(newIndex, newTimestamp, this.pendingTransactions, previousBlock.hash);
-    newBlock.mine(this.difficulty);
-    this.adjustDifficulty();
-    this.chain.push(newBlock);    
+    //newBlock.mine(this.difficulty);
+    //this.adjustDifficulty();
+    this.chain.push(newBlock);  
     this.pendingTransactions = [];
 
     // Save the updated blockchain to storage
     this.saveBlockchain();
 
-    return block;
+    return newBlock;
   }
 
   adjustDifficulty() {

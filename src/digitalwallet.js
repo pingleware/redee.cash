@@ -4,6 +4,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const elliptic = require('elliptic');
 const base58 = require('base58');
+const faye = require('faye');
 
 // File path for storing the high-risk list
 const highRiskListFilePath = 'highRiskList.json';
@@ -17,12 +18,15 @@ class DigitalWallet {
         this.kycVerified = false;
         this.blockchain = blockchain;
 
+        // Create a Faye client
+        this.client = new faye.Client('http://localhost:8000/faye');
+
         // Load wallet data from storage or initialize with default values
         this.loadWalletData();
     }
 
     createWallet(name, email, balance = 0) {
-        const { privateKey, publicKey, address } = generateKeyPair();
+        const { privateKey, publicKey, address } = this.generateKeyPair();
         this.wallets[address] = {
             name: name,
             email: email,
@@ -35,6 +39,10 @@ class DigitalWallet {
 
         // Save the updated wallet data to storage
         this.saveWalletData();
+
+        this.client.publish('/newWallet', { address, balance });
+
+        return address;
     }
 
     importWallet(name, email, privateKeyOrpassPhrase) {
@@ -53,6 +61,9 @@ class DigitalWallet {
 
         // Save the updated wallet data to storage
         this.saveWalletData();
+
+        this.client.publish('/importWallet', { walletAddress, balance });
+
     }
 
     /**
@@ -87,7 +98,7 @@ class DigitalWallet {
         return {
             privateKey: privateKey,
             publicKey: publicKey,
-            address: this.generateAddress(publicKey)
+            address: this.generateWalletAddress(privateKey)
         }
     }
 
@@ -115,7 +126,7 @@ class DigitalWallet {
 
     generateWalletAddress(privateKey) {
         // Generate wallet address from private key using a cryptographic hash function
-        const hash = createHash('sha256').update(privateKey).digest('hex');
+        const hash = crypto.createHash('sha256').update(privateKey).digest('hex');
         return hash;
     }
 
@@ -182,6 +193,7 @@ class DigitalWallet {
 
         // Save the updated wallet data to storage
         this.saveWalletData();
+
     }
 
     // Load the high-risk list from the JSON file
@@ -226,6 +238,16 @@ class DigitalWallet {
             // Proceed with the transaction
             return false;
         }    
+    }
+
+    getBalance(walletId) {
+        const wallet = this.wallets[walletId];
+        if (!wallet) {
+          console.log(`Wallet '${walletId}' does not exist.`);
+          return;
+        }
+
+        return wallet.balance;
     }
 
     /**
@@ -273,6 +295,9 @@ class DigitalWallet {
         // purchase gold from reputable broker
         const { Gold } = require("./gold");
         Gold.purchase(totalAmount);
+
+        this.client.publish('/deposit', { transaction });
+
     }
 
     /**
@@ -318,6 +343,9 @@ class DigitalWallet {
         // sell gold to distribute cash to recipient
         const { Gold } = require("./gold");
         Gold.sell(totalAmount);
+
+        this.client.publish('/withdraw', { transaction });
+
     }
     
     /**
@@ -369,6 +397,9 @@ class DigitalWallet {
         // Broadcast the transaction to the blockchain network
         this.blockchain.addTransaction(senderTransaction);
         this.blockchain.addTransaction(recipientTransaction);
+
+        this.client.publish('/transfer', { senderTransaction, recipientTransaction });
+
     }
     
 
