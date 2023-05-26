@@ -17,6 +17,17 @@ class Block {
         const hash = crypto.createHash('sha256').update(data).digest('hex');
         return hash;
       }
+
+      mine(difficulty) {
+        const target = '0'.repeat(difficulty);
+    
+        while (this.hash.substring(0, difficulty) !== target) {
+          this.nonce++;
+          this.hash = this.calculateHash();
+        }
+    
+        console.log(`Block mined: ${this.hash}`);
+      }
 }
 
 module.exports = Block;

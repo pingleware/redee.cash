@@ -7,6 +7,7 @@ const { Block } = require('./block');
 class Blockchain {
   constructor() {
     this.chain = [];
+    this.difficulty = 4;
     this.currentTransactions = [];
     this.pendingTransactions = [];
 
@@ -59,7 +60,8 @@ class Blockchain {
     const newIndex = previousBlock.index + 1;
     const newTimestamp = new Date().toISOString();
     const newBlock = new Block(newIndex, newTimestamp, this.pendingTransactions, previousBlock.hash);
-
+    newBlock.mine(this.difficulty);
+    this.adjustDifficulty();
     this.chain.push(newBlock);    
     this.pendingTransactions = [];
 
@@ -67,6 +69,17 @@ class Blockchain {
     this.saveBlockchain();
 
     return block;
+  }
+
+  adjustDifficulty() {
+    const lastBlock = this.chain[this.chain.length - 1];
+    const timeDifference = lastBlock.timestamp - this.chain[this.chain.length - 2].timestamp;
+
+    if (timeDifference > 5000) {
+      this.difficulty--;
+    } else {
+      this.difficulty++;
+    }
   }
 
   getLatestBlock() {
