@@ -62,8 +62,8 @@ class DigitalWallet {
         // Save the updated wallet data to storage
         this.saveWalletData();
 
-        this.client.publish('/importWallet', { walletAddress, balance });
-
+        this.client.publish('/importWallet', { walletAddress });
+        return walletAddress;
     }
 
     /**

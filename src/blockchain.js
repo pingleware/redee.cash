@@ -10,6 +10,7 @@ class Blockchain {
     this.difficulty = 4;
     this.currentTransactions = [];
     this.pendingTransactions = [];
+    this.smartContracts = [];
 
     if (fs.existsSync('blockchain_data.json') === false) {
         this.chain = [this.createGenesisBlock()];
@@ -59,6 +60,8 @@ class Blockchain {
     const previousBlock = this.getLatestBlock();
     const newIndex = previousBlock.index + 1;
     const newTimestamp = new Date().toISOString();
+    // add smart contract to the block
+    this.pendingTransactions.push(...this.smartContracts);
     const newBlock = new Block(newIndex, newTimestamp, this.pendingTransactions, previousBlock.hash);
     //newBlock.mine(this.difficulty);
     //this.adjustDifficulty();
@@ -91,6 +94,9 @@ class Blockchain {
     this.createBlock();    
   }
 
+  addSmartContract(contract) {
+    this.smartContracts.push(contract);
+  }
 
   // Other blockchain methods like validation, consensus, etc.
 }
