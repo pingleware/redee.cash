@@ -25,11 +25,12 @@ class DigitalWallet {
         this.loadWalletData();
     }
 
-    createWallet(name, email, balance = 0) {
+    createWallet(name, email, metal, balance = 0) {
         const { privateKey, publicKey, address } = this.generateKeyPair();
         this.wallets[address] = {
             name: name,
             email: email,
+            metal: metal,
             privateKey: privateKey,
             publicKey: publicKey,
             balance: balance,
@@ -45,13 +46,14 @@ class DigitalWallet {
         return address;
     }
 
-    importWallet(name, email, privateKeyOrpassPhrase) {
+    importWallet(name, email, metal, privateKeyOrpassPhrase) {
         // Generate wallet address from private key
         const walletAddress = this.generateWalletAddress(privateKeyOrpassPhrase);
 
         this.wallets[walletAddress] = {
             name: name,
             email: email,
+            metal: metal,
             privateKey: privateKeyOrpassPhrase,
             publicKey: this.generatePublicKey(privateKeyOrpassPhrase),
             balance: Number(0),
@@ -294,7 +296,12 @@ class DigitalWallet {
         
         // purchase gold from reputable broker
         const { Gold } = require("./gold");
-        Gold.purchase(totalAmount);
+        const { Silver } = require("./silver");
+        if (wallet.metal == "gold") {
+            Gold.purchase(totalAmount);
+        } else {
+            Silver.purchase(totalAmount);
+        }
 
         this.client.publish('/deposit', { transaction });
 
@@ -342,7 +349,12 @@ class DigitalWallet {
 
         // sell gold to distribute cash to recipient
         const { Gold } = require("./gold");
-        Gold.sell(totalAmount);
+        const { Silver } = require("./silver");
+        if (wallet.metal == "gold") {
+            Gold.sell(totalAmount);
+        } else {
+            Silver.sell(totalAmount);
+        }
 
         this.client.publish('/withdraw', { transaction });
 
@@ -359,6 +371,11 @@ class DigitalWallet {
     transfer(senderId, recipientId, amount) {
         const senderWallet = this.wallets[senderId];
         const recipientWallet = this.wallets[recipientId];
+
+        if (senderWallet.metal !== recipientWallet.metal) {
+            console.log(`Cannot send mixed metals between wallets`);
+            return;
+        }
     
         if (!senderWallet) {
           console.log(`Sender wallet '${senderId}' does not exist.`);

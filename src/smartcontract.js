@@ -15,7 +15,7 @@ class SmartContract {
         return address;
     }
 
-    execute(contractContext) {
+    execute() {
       // Evaluate the contract code in the specified context
       const contractResult = eval(this.contractCode);
       
