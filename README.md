@@ -19,3 +19,7 @@ Discover the benefits of REDEE.CASH:
 Experience the power of REDEE.CASH today! Whether you are an individual or a business, REDEE.CASH offers a reliable and stable currency that combines the benefits of gold with the convenience of digital transactions. Embrace the future of finance and be part of the REDEE.CASH revolution.
 
 Next Step: Obtain Regulatory/Judicial approval
+
+## Whitepaper
+
+[REDEE.CASH Whitepaper](files/whitepaper.pdf)

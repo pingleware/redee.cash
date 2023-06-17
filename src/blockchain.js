@@ -20,6 +20,7 @@ class Blockchain {
     // Load blockchain from storage or initialize with genesis block
     this.loadBlockchain();
   }
+  
 
   loadBlockchain() {
     try {
@@ -66,10 +67,16 @@ class Blockchain {
     //newBlock.mine(this.difficulty);
     //this.adjustDifficulty();
     this.chain.push(newBlock);  
-    this.pendingTransactions = [];
 
-    // Save the updated blockchain to storage
-    this.saveBlockchain();
+    if (this.isChainValid()) {
+      // Save the updated blockchain to storage
+      this.saveBlockchain();
+    } else {
+      this.chain.pop();
+      newBlock = null;
+    }
+
+    this.pendingTransactions = [];
 
     return newBlock;
   }
@@ -96,6 +103,23 @@ class Blockchain {
 
   addSmartContract(contract) {
     this.smartContracts.push(contract);
+  }
+
+  isChainValid() {
+    for (let i = 1; i < this.chain.length; i++) {
+      const currentBlock = this.chain[i];
+      const previousBlock = this.chain[i - 1];
+
+      if (!currentBlock.validateHash()) {
+        return false;
+      }
+
+      if (currentBlock.previousHash !== previousBlock.hash) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   // Other blockchain methods like validation, consensus, etc.
