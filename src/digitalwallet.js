@@ -1,6 +1,8 @@
 "use strict"
 
+const os = require('os');
 const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
 const elliptic = require('elliptic');
 const base58 = require('base58');
@@ -74,7 +76,7 @@ class DigitalWallet {
      */
     loadWalletData() {
         try {
-            const data = fs.readFileSync('wallet_data.json');
+            const data = fs.readFileSync(path.join(os.homedir(),'wallet_data.json'));
             this.wallets = JSON.parse(data);
         } catch (err) {
             // Initialize with default wallet data if no data found
@@ -90,7 +92,7 @@ class DigitalWallet {
      */
     saveWalletData() {
         const data = JSON.stringify(this.wallets);
-        fs.writeFileSync('wallet_data.json', data);
+        fs.writeFileSync(path.join(os.homedir(),'wallet_data.json'), data);
     }
 
     generateKeyPair() {
@@ -289,7 +291,7 @@ class DigitalWallet {
         if (totalAmount > 10000) {
             // Generate SAR for high-value deposits
             const { FINCENService } = require("./fincenservice");
-            FINCENService.submitSAR(walletId, transaction.id);
+            FINCENService.submitSAR("Deposit greater than $10,000", walletId, transaction);
         }    
         // Broadcast the transaction to the blockchain network
         this.blockchain.addTransaction(transaction);
@@ -341,7 +343,7 @@ class DigitalWallet {
         if (amountUSD > 10000) {
             // Generate SAR for high-value deposits
             const { FINCENService } = require("./fincenservice");
-            FINCENService.submitSAR(walletId, transaction.id);
+            FINCENService.submitSAR("Deposit greater than $10,000", walletId, transaction);
         }    
 
         // Broadcast the transaction to the blockchain network

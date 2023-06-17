@@ -8,10 +8,29 @@
 
 // Mock KYC service for identity verification
 class KYCService {
-    static verifyIdentity(name, id) {
+    static verifyIdentity(name, address) {
+      const wallet = this.wallets[address];
+      if (!wallet) {
+        console.log(`Wallet '${address}' does not exist.`);
+        return;
+      }    
+      if (wallet.name !== name) {
+        console.log(`Wallet '${address}' mismatch.`);
+        return;
+      }  
       // Simulating KYC verification
-      const verified = Math.random() < 0.9; // 90% chance of successful verification
+      const verified = wallet.kycVerified;
       return verified;
+    }
+
+    // Invoked by administrator
+    static updatedIdentity(address, verified=false) {
+      const wallet = this.wallets[address];
+      if (!wallet) {
+        console.log(`Wallet '${address}' does not exist.`);
+        return;
+      }    
+      wallet.kycVerified = verified;
     }
 }
 
