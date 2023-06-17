@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>REDEE.CASH DIGITAL CURRENCY</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .quote {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+
+    .quote span {
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .quote:hover {
+      background-color: #f0f0f0;
+    }
+
+    .quote:hover span {
+      color: #ff6f00;
+    }
+  </style>
+</head>
+<body>
+  <h1>REDEE.CASH DIGITAL CURRENCY</h1>
+
+  <div id="token-quote" class="quote">
+    <span>Par Value per Commodity Share:</span>
+    <span id="par-value">Loading...</span>
+  </div>
+
+  <div id="token-quote" class="quote">
+    <span>Gold Token Price:</span>
+    <span id="gold-token-price" title="The Gold Token price must be greater than the par value">Loading...</span>
+  </div>
+
+  <div id="token-quote" class="quote">
+    <span>Silver Token Price:</span>
+    <span id="silver-token-price" title="The Silver Token price must be greater than the par value">Loading...</span>
+  </div>
+
+  <div id="token-quote" class="quote">
+    <span>Gold Tokens Issued:</span>
+    <span id="gold-tokens">Loading...</span>
+  </div>
+
+  <div id="token-quote" class="quote">
+    <span>Silver Tokens Issued:</span>
+    <span id="silver-tokens">Loading...</span>
+  </div>
+
+  <div id="token-quote" class="quote">
+    <span>Total Tokens Issued:</span>
+    <span id="total-tokens">Loading...</span>
+  </div>
+
+  <div id="gold-quote" class="quote">
+    <span>Gold Price:</span>
+    <span id="gold-price">Loading...</span>
+  </div>
+
+  <div id="silver-quote" class="quote">
+    <span>Silver Price:</span>
+    <span id="silver-price">Loading...</span>
+  </div>
+
+  <script>
+    // Replace SERVER_URL with the actual URL of your server
+    const serverUrl = 'http://localhost:3000/api/quotes';
+
+    // Function to fetch the quotes from the server
+    async function fetchQuotes() {
+      try {
+        const response = await fetch(serverUrl);
+        const data = await response.json();
+        
+        document.getElementById('gold-token-price').textContent = data.token.gold.price;
+        document.getElementById('gold-tokens').textContent = data.token.gold.issued;
+        document.getElementById('silver-token-price').textContent = data.token.silver.price;
+        document.getElementById('silver-tokens').textContent = data.token.silver.issued;
+        document.getElementById('total-tokens').textContent = data.token.total;
+        document.getElementById('gold-price').textContent = data.gold;
+        document.getElementById('silver-price').textContent = data.silver;
+        document.getElementById('par-value').textContent = data.parValue;
+      } catch (error) {
+        console.error('Error fetching quotes:', error);
+      }
+    }
+
+    // Call the fetchQuotes function to populate the quotes initially
+    fetchQuotes();
+
+    // Set an interval to fetch quotes every 5 seconds
+    setInterval(fetchQuotes, 5000);
+  </script>
+</body>
+</html>

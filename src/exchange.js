@@ -6,7 +6,8 @@ const apiKey = 'YOUR_ALPHA_VANTAGE_API_KEY';
 const currency = 'USD';
 const symbol = 'XAU'; // XAU represents gold
 
-async function getExchangeRate() {
+async function getGoldExchangeRate() {
+  /*
     try {
       const response = await fetch(
         `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${currency}&to_symbol=${symbol}&apikey=${apiKey}`
@@ -25,23 +26,34 @@ async function getExchangeRate() {
     } catch (error) {
       console.error('Error retrieving exchange rate:', error);
     }
+  */
+  return {
+      latestDate: new Date().toISOString().split("T")[0],
+      exchangeRate: 1969.45
+  }
 }
 
-function computeTokenQuantity(usdAmount) {
-    var conversionRate = getExchangeRate().exchangeRate;
+async function getSilverExchangeRate() {
+  return {
+    latestDate: new Date().toISOString().split("T")[0],
+    exchangeRate: 24.42
+}
+}
+
+function computeTokenQuantity(usdAmount, conversionRate) {
     var digitalTokenAmount = usdAmount * conversionRate;
     return digitalTokenAmount;
 }
 
-function computeUSD(digitalTokenAmount) {
-    var conversionRate = getExchangeRate().exchangeRate;
+function computeUSD(digitalTokenAmount, conversionRate) {
     var usdAmount = digitalTokenAmount / conversionRate;
     return usdAmount;
 }
 
 
 module.exports = {
-    getExchangeRate,
-    computeTokenQuantity,
-    computeUSD
+  getGoldExchangeRate,
+  getSilverExchangeRate,
+  computeTokenQuantity,
+  computeUSD
 }

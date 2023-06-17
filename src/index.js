@@ -36,6 +36,60 @@ class CurrencyAPI {
     this.router.post('/wallet/import', this.importWallet);
     this.router.post('/deploy/contract', this.deployContract);
     this.router.post('/execute/contract', this.executeContract);
+
+    this.router.get('/quotes', (req, res) => {
+      let parValue = 5.00;
+      const maxCommodityShares = 250000000;
+      let marketCap = maxCommodityShares * parValue;
+
+
+      const goldPrice = 1969.45; // The current price of gold
+      const silverPrice = 24.42; // The current price of silver
+
+      let totalGoldTokensIssued = (100000 * goldPrice);
+      let totalSilverTokensIssued = (10000000 * silverPrice); 
+
+      let goldTokenPrice =  Math.max(goldPrice, parValue, marketCap / totalGoldTokensIssued);
+      let silverTokenPrice = Math.max(silverPrice, parValue, marketCap / totalSilverTokensIssued);
+
+      let totalTokensIssued = totalGoldTokensIssued + totalSilverTokensIssued;
+
+      
+      while (goldTokenPrice < parValue && totalGoldTokensIssued <= totalTokensIssued) {
+        // Increase the total tokens issued by a certain factor (e.g., 10%)
+        totalGoldTokensIssued *= 1.1;
+      
+        // Recalculate the token price
+        goldTokenPrice =  Math.max(goldPrice, parValue, marketCap / totalGoldTokensIssued);
+      }
+
+      totalTokensIssued = totalGoldTokensIssued + totalSilverTokensIssued;
+
+      while (silverTokenPrice < parValue && totalSilverTokensIssued <= totalTokensIssued) {
+        // Increase the total tokens issued by a certain factor (e.g., 10%)
+        totalSilverTokensIssued *= 1.1;
+      
+        // Recalculate the token price
+        silverTokenPrice = Math.max(silverPrice, parValue, marketCap / totalSilverTokensIssued);
+      }
+      
+      res.json({
+        token: {
+          gold: {
+            price: goldTokenPrice.toFixed(2),
+            issued: totalGoldTokensIssued.toFixed(0)
+          },
+          silver: {
+            price: silverTokenPrice.toFixed(2),
+            issued: totalSilverTokensIssued.toFixed(0)
+          },
+          total: totalTokensIssued
+        },
+        gold: goldPrice.toFixed(2),
+        silver: silverPrice.toFixed(2),
+        parValue: parValue.toFixed(2)
+      })
+    })
   }
 
   getBlocks = (req, res) => {
@@ -115,3 +169,38 @@ const currencyAPI = new CurrencyAPI(blockchain, wallet);
 currencyAPI.start(3000);
 
 module.exports = currencyAPI
+
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
+
+let mainWindow;
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  });
+
+  mainWindow.loadFile('views/index.html');
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+app.on('ready', createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow();
+  }
+});

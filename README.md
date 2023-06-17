@@ -23,3 +23,9 @@ Next Step: Obtain Regulatory/Judicial approval
 ## Whitepaper
 
 [REDEE.CASH Whitepaper](files/whitepaper.pdf)
+
+## Main Dialog
+
+The dialog shows the token prices as well as the token issued with the gold and silver quotes,
+
+![1687015367557](image/README/1687015367557.png)
