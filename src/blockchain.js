@@ -1,30 +1,62 @@
 "use strict"
 
+const WebSocket = require('ws');
 const fs = require('fs');
 const { exec } = require('child_process');
 const Block = require('./block');
 
 class Blockchain {
-  constructor() {
+  constructor(mainnet=true) {
     this.chain = [];
     this.difficulty = 4;
     this.currentTransactions = [];
     this.pendingTransactions = [];
     this.smartContracts = [];
+    this.peers = [];
+    this.difficulty = 2;
+    this.currentNodeUrl = 'ws://localhost:3000'; // Current node URL for peer-to-peer communication
+    this.networkNodes = []; // URLs of other nodes in the network
+    this.server = null;
+    this.mainnet = mainnet;
 
-    if (fs.existsSync('blockchain_data.json') === false) {
+    if (mainnet) {
+      if (fs.existsSync('blockchain_data.json') === false) {
         this.chain = [this.createGenesisBlock()];
         this.saveBlockchain();
+      }
+    } else {
+      if (fs.existsSync('blockchain_peer_data.json') === false) {
+        this.chain = [this.createGenesisBlock()];
+        this.saveBlockchain();
+      }
     }
 
     // Load blockchain from storage or initialize with genesis block
     this.loadBlockchain();
   }
+
+  getLastIndex() {
+    return this.chain.length - 1;
+  }
+
+  getNextIndex() {
+    const previousBlock = this.getLatestBlock();
+    let newIndex = 1;
+    if (previousBlock) {
+      newIndex = previousBlock.index + 1;
+    }
+    return newIndex;
+  }
   
 
   loadBlockchain() {
     try {
-      const data = fs.readFileSync('blockchain_data.json');
+      let data = null;
+      if (this.mainnet) {
+        data = fs.readFileSync('blockchain_data.json');
+      } else {
+        data = fs.readFileSync('blockchain_peer_data.json');
+      }
       const { chain, currentTransactions } = JSON.parse(data);
 
       this.chain = chain;
@@ -41,7 +73,11 @@ class Blockchain {
       currentTransactions: this.currentTransactions,
     });
 
-    fs.writeFileSync('blockchain_data.json', data);
+    if (this.mainnet) {
+      fs.writeFileSync('blockchain_data.json', data);
+    } else {
+      fs.writeFileSync('blockchain_peer_data.json', data);
+    }
 
     // Invoke the commit_to_github.sh script
     exec('./commit_to_github.sh', (error, stdout, stderr) => {
@@ -57,9 +93,16 @@ class Blockchain {
     return new Block(0, new Date().toISOString(), 'Genesis Block', '0');
   }
 
+  addBlock(newBlock) {
+    newBlock.previousHash = this.getLatestBlock().hash;
+    newBlock.hash = newBlock.calculateHash();
+    this.chain.push(newBlock);
+    this.saveBlockchain();
+  }
+
   createBlock() {
     const previousBlock = this.getLatestBlock();
-    const newIndex = previousBlock.index + 1;
+    const newIndex = this.getNextIndex();
     const newTimestamp = new Date().toISOString();
     // add smart contract to the block
     this.pendingTransactions.push(...this.smartContracts);
@@ -70,6 +113,8 @@ class Blockchain {
 
     if (this.isChainValid()) {
       // Save the updated blockchain to storage
+      this.adjustDifficulty();
+      newBlock.mine(this.difficulty);
       this.saveBlockchain();
     } else {
       this.chain.pop();
@@ -105,10 +150,15 @@ class Blockchain {
     this.smartContracts.push(contract);
   }
 
-  isChainValid() {
-    for (let i = 1; i < this.chain.length; i++) {
-      const currentBlock = this.chain[i];
-      const previousBlock = this.chain[i - 1];
+
+  async isChainValid(chain=[]) {
+    let _chain = chain;
+    if (_chain.length == 0) {
+      _chain = this.chain;
+    }
+    for (let i = 1; i < _chain.length; i++) {
+      const currentBlock = await this.chain[i];
+      const previousBlock = await this.chain[i - 1];
 
       if (!currentBlock.validateHash()) {
         return false;
@@ -121,6 +171,51 @@ class Blockchain {
 
     return true;
   }
+  
+  async isValidChain(chain) {
+    for (let i = 1; i < chain.length; i++) {
+      const currentBlock = await chain[i].getChain();
+      const previousBlock = await chain[i - 1].getChain();
+
+      if (currentBlock.hash !== currentBlock.calculateHash() ||
+          currentBlock.previousHash !== previousBlock.hash) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  getChain() {
+    return this.chain;
+  }
+
+  connectToPeer(peer) {
+    this.peers.push(peer);
+  }
+
+  createPeerBlockchain() {
+    const peerBlockchain = new Blockchain(false);
+    this.peers.push(peerBlockchain);
+    peerBlockchain.syncBlockchain(this.chain);
+    peerBlockchain.saveBlockchain();
+    return peerBlockchain;
+  }
+
+  syncBlockchain(chain) {
+    if (chain.length > this.chain.length && this.isValidChain(chain)) {
+      this.chain = chain;
+    }
+  }
+
+  syncPeersBlockchain() {
+    this.peers.forEach(peer => {
+      const peerChain = peer.getChain();
+      console.log(peerChain)
+      
+      this.syncBlockchain(peerChain);
+    });
+  }
+
 
   // Other blockchain methods like validation, consensus, etc.
 }

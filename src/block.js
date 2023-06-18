@@ -12,27 +12,27 @@ class Block {
         this.hash = this.calculateHash();
   }
     
-    calculateHash() {
-        const data = this.index + this.timestamp + JSON.stringify(this.data) + this.previousHash + this.nonce;
-        const hash = crypto.createHash('sha256').update(data).digest('hex');
-        return hash;
-    }
+  calculateHash() {
+      const data = this.index + this.timestamp + JSON.stringify(this.data) + this.previousHash + this.nonce;
+      const hash = crypto.createHash('sha256').update(data).digest('hex');
+      return hash;
+  }
 
-    mine(difficulty) {
-        const target = '0'.repeat(difficulty);
-    
-        while (this.hash.substring(0, difficulty) !== target) {
-          this.nonce++;
-          this.hash = this.calculateHash();
-        }
-    
-        console.log(`Block mined: ${this.hash}`);
-    }
+  mine(difficulty) {
+      const target = '0'.repeat(difficulty);
+  
+      while (this.hash.substring(0, difficulty) !== target) {
+        this.nonce++;
+        this.hash = this.calculateHash();
+      }
+  
+      console.log(`Block mined: ${this.hash}`);
+  }
 
-    validateHash() {
-        const calculatedHash = this.calculateHash();
-        return this.hash === calculatedHash;
-    }
+  validateHash() {
+      const calculatedHash = this.calculateHash();
+      return this.hash === calculatedHash;
+  }
 }
 
 module.exports = Block;
