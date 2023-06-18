@@ -84,8 +84,8 @@
     // Function to fetch the quotes from the server
     async function fetchQuotes() {
       try {
-        const response = await fetch(serverUrl);
-        const data = await response.json();
+        const serverResponse = await fetch(serverUrl);
+        const data = await serverResponse.json();
         
         document.getElementById('gold-token-price').textContent = data.token.gold.price;
         document.getElementById('gold-tokens').textContent = data.token.gold.issued;
@@ -104,7 +104,7 @@
     fetchQuotes();
 
     // Set an interval to fetch quotes every 5 seconds
-    setInterval(fetchQuotes, 5000);
+    setInterval(fetchQuotes, 30000);
   </script>
 </body>
 </html>

@@ -37,14 +37,20 @@ class CurrencyAPI {
     this.router.post('/deploy/contract', this.deployContract);
     this.router.post('/execute/contract', this.executeContract);
 
-    this.router.get('/quotes', (req, res) => {
+    this.router.post('/meerchant/transaction', this.merchantTransaction);
+
+    this.router.get('/quotes', async (req, res) => {
       let parValue = 5.00;
       const maxCommodityShares = 250000000;
       let marketCap = maxCommodityShares * parValue;
 
+      const { getGoldExchangeRate, getSilverExchangeRate } = require('./exchange');
 
-      const goldPrice = 1969.45; // The current price of gold
-      const silverPrice = 24.42; // The current price of silver
+      const goldRates = await getGoldExchangeRate();
+      const silverRates = await getSilverExchangeRate();
+
+      const goldPrice = Number(goldRates.exchangeRate); // The current price of gold
+      const silverPrice = Number(silverRates.exchangeRate); // The current price of silver
 
       let totalGoldTokensIssued = (100000 * goldPrice);
       let totalSilverTokensIssued = (10000000 * silverPrice); 
@@ -85,9 +91,9 @@ class CurrencyAPI {
           },
           total: totalTokensIssued
         },
-        gold: goldPrice.toFixed(2),
-        silver: silverPrice.toFixed(2),
-        parValue: parValue.toFixed(2)
+        gold: goldPrice,
+        silver: silverPrice,
+        parValue: parValue
       })
     })
   }
@@ -148,6 +154,19 @@ class CurrencyAPI {
     }
   }
 
+  merchantTransaction = (req, res) => {
+    const {merchant, sender, recipient, amount} = req.body;
+    const MerchantAPI = require('./merchant');
+    const merchantAPI = new MerchantAPI(this.blockchain, merchant);
+    try {
+      merchant.verifyMerchant();
+      var result = merchant.createTransaction(sender,recipient,amount);
+      res.json(result);
+    } catch(error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   start(port) {
     const app = express();
     app.use(express.json());
@@ -172,6 +191,7 @@ module.exports = currencyAPI
 
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const MerchantAPI = require('./merchant');
 
 let mainWindow;
 
