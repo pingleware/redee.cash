@@ -1,6 +1,7 @@
 "use strict"
 
 const WebSocket = require('ws');
+const net = require('net');
 const fs = require('fs');
 const { exec } = require('child_process');
 const Block = require('./block');
@@ -191,6 +192,32 @@ class Blockchain {
 
   connectToPeer(peer) {
     this.peers.push(peer);
+  }
+
+  connectToRemotePeer(ip, port) {
+    const socket = net.createConnection(port, ip, () => {
+      console.log(`Connected to peer at ${ip}:${port}`);
+      this.peers.push(socket);
+    });
+
+    socket.on('data', data => {
+      const receivedChain = JSON.parse(data);
+      if (receivedChain.length > this.chain.length && this.isValidChain(receivedChain)) {
+        this.chain = receivedChain;
+        console.log(`Blockchain synchronized with peer at ${ip}:${port}`);
+      }
+    });
+
+    socket.on('error', err => {
+      console.error(`Error connecting to peer at ${ip}:${port}:`, err);
+    });
+  }
+
+  broadcastChain() {
+    const serializedChain = JSON.stringify(this.chain);
+    this.peers.forEach(peer => {
+      peer.write(serializedChain);
+    });
   }
 
   createPeerBlockchain() {
