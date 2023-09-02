@@ -277,9 +277,9 @@ class CurrencyAPI {
       this.silverPrice = Number(silverRates.exchangeRate); // The current price of silver
       this.quartzPrice = Number(quartzRate.exchangeRate); // The current price of quartz
 
-      let totalGoldTokensIssued = (100000 * this.goldPrice);
-      let totalSilverTokensIssued = (10000000 * this.silverPrice); 
-      let totalQuartzTokensIssued = (10000000 * this.quartzPrice);
+      let totalGoldTokensIssued = (maxCommodityShares * this.goldPrice);
+      let totalSilverTokensIssued = (maxCommodityShares * this.silverPrice); 
+      let totalQuartzTokensIssued = (maxCommodityShares * this.quartzPrice);
 
       if (totalGoldSupply > 0) {
         totalGoldSupply += Number(totalGoldTokensIssued);
