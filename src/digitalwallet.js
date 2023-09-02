@@ -70,18 +70,41 @@ class DigitalWallet {
         return walletAddress;
     }
 
+    removeElementByKey(arr, key, value) {
+        return arr.filter((element) => element[key] !== value);
+    }
+    removeWallet(walletId) {
+        const wallet = this.wallets[walletId];
+        if (!wallet) {
+          console.log(`Wallet '${walletId}' does not exist.`);
+          return;
+        }
+
+        this.wallets = this.removeElementByKey(Object.values(this.wallets),'hash',walletId);
+        // Save the updated wallet data to storage
+        this.saveWalletData();
+    }
+
     /**
      * It attempts to read the wallet data from the wallet_data.json file and loads it into the walletData object. 
      * If no data is found, it initializes the wallet data with default values.
      */
     loadWalletData() {
         try {
-            const data = fs.readFileSync(path.join(os.homedir(),'wallet_data.json'));
+            if (!fs.existsSync(path.join(os.homedir(),'.redee.cash'))) {
+                fs.mkdirSync(path.join(os.homedir(),'.redee.cash'));
+            }
+            const data = fs.readFileSync(path.join(os.homedir(),'.redee.cash','wallet_data.json'));
             this.wallets = JSON.parse(data);
         } catch (err) {
             // Initialize with default wallet data if no data found
             this.wallets = {};
         }
+    }
+
+    getWallets() {
+        //const wallets = Object.keys(this.wallets.wallets);
+        return this.wallets;
     }
 
     /**
@@ -92,7 +115,11 @@ class DigitalWallet {
      */
     saveWalletData() {
         const data = JSON.stringify(this.wallets);
-        fs.writeFileSync(path.join(os.homedir(),'wallet_data.json'), data);
+        if (!fs.existsSync(path.join(os.homedir(),'.redee.cash'))) {
+            fs.mkdirSync(path.join(os.homedir(),'.redee.cash'));
+        }
+
+        fs.writeFileSync(path.join(os.homedir(),'.redee.cash','wallet_data.json'), data);
     }
 
     generateKeyPair() {
@@ -203,7 +230,10 @@ class DigitalWallet {
     // Load the high-risk list from the JSON file
     loadHighRiskList() {
         try {
-            const data = fs.readFileSync(highRiskListFilePath);
+            if (!fs.existsSync(path.join(os.homedir(),'.redee.cash'))) {
+                fs.mkdirSync(path.join(os.homedir(),'.redee.cash'));
+            }
+            const data = fs.readFileSync(path.join(os.homedir(),'.redee.cash',highRiskListFilePath));
             return JSON.parse(data);
         } catch (error) {
             // Return an empty array if the file doesn't exist or there's an error reading it
@@ -213,8 +243,15 @@ class DigitalWallet {
   
     // Save the high-risk list to the JSON file
     saveHighRiskList(highRiskList) {
-        const data = JSON.stringify(highRiskList);
-        fs.writeFileSync(highRiskListFilePath, data);
+        try {
+            const data = JSON.stringify(highRiskList);
+            if (!fs.existsSync(path.join(os.homedir(),'.redee.cash'))) {
+                fs.mkdirSync(path.join(os.homedir(),'.redee.cash'));
+            }
+            fs.writeFileSync(path.join(os.homedir(),'.redee.cash',highRiskListFilePath), data);    
+        } catch(error) {
+            console.error(error);
+        }
     }
 
     /**
@@ -251,7 +288,7 @@ class DigitalWallet {
           return;
         }
 
-        return wallet.balance;
+        return Number(wallet.balance);
     }
 
     /**
@@ -266,27 +303,39 @@ class DigitalWallet {
      * @param {*} fee any fee for purchasing gold from the broker
      * @returns 
      */
-    deposit(walletId, amount, fee = 0) {
+    deposit(walletId, amount, fee = 0, goldPrice=0,silverPrice=0) {
         const wallet = this.wallets[walletId];
         if (!wallet) {
           console.log(`Wallet '${walletId}' does not exist.`);
           return;
         }
+
+        console.log(wallet);
     
         // KYC verification
-        const verified = KYCService.verifyIdentity(wallet.name, wallet.id);
+        const verified = wallet.kycVerified;
         if (!verified) {
           console.log('KYC Verification Failed. Deposit rejected.');
           return;
         }
     
-        const totalAmount = amount + fee;
+        const totalAmount = Number(amount) + Number(fee);
+        console.log(totalAmount);
         const { computeTokenQuantity } = require("./exchange");
-        wallet.balance += Number(computeTokenQuantity(amount)),toFixed(5);
-        
+        // purchase gold from reputable broker
+        const Gold = require("./gold");
+        const Silver = require("./silver");
+        if (wallet.metal == "gold") {
+            //Gold.purchase(totalAmount);
+            wallet.balance = Number(amount / goldPrice).toFixed(5);
+        } else {
+            //Silver.purchase(totalAmount);
+            wallet.balance = Number(amount / silverPrice).toFixed(5);
+        }
+
         const transaction = this.createTransaction(walletId, owner, amount);
         wallet.pendingTransactions.push(transaction);
-        this.pendingTransactions.push(transaction);
+        //this.pendingTransactions.push(transaction);
     
         if (totalAmount > 10000) {
             // Generate SAR for high-value deposits
@@ -296,14 +345,9 @@ class DigitalWallet {
         // Broadcast the transaction to the blockchain network
         this.blockchain.addTransaction(transaction);
         
-        // purchase gold from reputable broker
-        const { Gold } = require("./gold");
-        const { Silver } = require("./silver");
-        if (wallet.metal == "gold") {
-            Gold.purchase(totalAmount);
-        } else {
-            Silver.purchase(totalAmount);
-        }
+
+        this.wallets[walletId].balance = wallet.balance;
+        this.saveWalletData();
 
         this.client.publish('/deposit', { transaction });
 

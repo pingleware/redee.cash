@@ -53,6 +53,11 @@
   </div>
 
   <div id="token-quote" class="quote">
+    <span>Quartz Token Price:</span>
+    <span id="quartz-token-price" title="The Quartz Token price must be greater than the par value">Loading...</span>
+  </div>
+
+  <div id="token-quote" class="quote">
     <span>Gold Tokens Issued:</span>
     <span id="gold-tokens">Loading...</span>
   </div>
@@ -60,6 +65,11 @@
   <div id="token-quote" class="quote">
     <span>Silver Tokens Issued:</span>
     <span id="silver-tokens">Loading...</span>
+  </div>
+
+  <div id="token-quote" class="quote">
+    <span>Quartz Tokens Issued:</span>
+    <span id="quartz-tokens">Loading...</span>
   </div>
 
   <div id="token-quote" class="quote">
@@ -77,6 +87,31 @@
     <span id="silver-price">Loading...</span>
   </div>
 
+  <div id="quartz-quote" class="quote">
+    <span>Quartz Price:</span>
+    <span id="quartz-price">Loading...</span>
+  </div>
+
+  <fieldset>
+    <legend>Exchange Holdings</legend>
+    <div id="exchange-token-holdings" class="quote">
+      <span>Token(s)</span>
+      <span id="token-holdings">Loading...</span>
+    </div>
+    <div id="exchange-gold-holdings" class="quote">
+      <span>Gold</span>
+      <span id="gold-holdings">Loading...</span>
+    </div>
+    <div id="exchange-silver-holdings" class="quote">
+      <span>Silver</span>
+      <span id="silver-holdings">Loading...</span>
+    </div>
+    <div id="exchange-quartz-holdings" class="quote">
+      <span>Quartz</span>
+      <span id="quartz-holdings">Loading...</span>
+    </div>
+  </fieldset>
+
   <script>
     // Replace SERVER_URL with the actual URL of your server
     const serverUrl = 'http://localhost:3000/api/quotes';
@@ -86,15 +121,24 @@
       try {
         const serverResponse = await fetch(serverUrl);
         const data = await serverResponse.json();
+
         
         document.getElementById('gold-token-price').textContent = data.token.gold.price;
         document.getElementById('gold-tokens').textContent = data.token.gold.issued;
         document.getElementById('silver-token-price').textContent = data.token.silver.price;
         document.getElementById('silver-tokens').textContent = data.token.silver.issued;
+        document.getElementById('quartz-token-price').textContent = data.token.quartz.price;
+        document.getElementById('quartz-tokens').textContent = data.token.quartz.issued;
         document.getElementById('total-tokens').textContent = data.token.total;
         document.getElementById('gold-price').textContent = data.gold;
         document.getElementById('silver-price').textContent = data.silver;
+        document.getElementById('quartz-price').textContent = data.quartz;
         document.getElementById('par-value').textContent = data.parValue;
+
+        document.getElementById('token-holdings').textContent = data.token.exchange.total;
+        document.getElementById('gold-holdings').textContent = data.token.gold.exchange.total;
+        document.getElementById('silver-holdings').textContent = data.token.silver.exchange.total;
+        document.getElementById('quartz-holdings').textContent = data.token.quartz.exchange.total;
       } catch (error) {
         console.error('Error fetching quotes:', error);
       }

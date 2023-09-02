@@ -108,8 +108,6 @@ class Blockchain {
     // add smart contract to the block
     this.pendingTransactions.push(...this.smartContracts);
     const newBlock = new Block(newIndex, newTimestamp, this.pendingTransactions, previousBlock.hash);
-    //newBlock.mine(this.difficulty);
-    //this.adjustDifficulty();
     this.chain.push(newBlock);  
 
     if (this.isChainValid()) {
